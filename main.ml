@@ -111,8 +111,19 @@ let s x y z = x z ( y z );;
 let second a b = k (s k k) a b;;
 
 (* Exercise 5.2 *)
-let sum_list _ = assert false
-let max_list _ = assert false
+let rec sum_list lst =
+  match lst with
+  | [] -> 0
+  | hd :: tl -> hd + sum_list tl
+
+let rec max_list lst =
+  match lst with
+  | [] -> raise (Failure "Empty list")
+  | [x] -> x
+  | hd :: tl ->
+      let max_rest = max_list tl in
+      if hd > max_rest then hd else max_rest
+
 
 (* Exercise 5.3(1) *)
 let rec downto0 n = 
@@ -263,6 +274,91 @@ let overlap (fig1 : loc_fig) (fig2 : loc_fig) : bool =
   let within_square x y s =
     fig1.x >= x && fig1.x <= x + s && fig1.y >= y && fig1.y <= y + s
   in
+  let dist_sqr x1 y1 x2 y2 =
+    let dx = x1 - x2 in
+    let dy = y1 - y2 in
+    (dx * dx) + (dy * dy)
+  in
+  match (fig1.fig, fig2.fig) with
+  | (Point, Point) -> fig1.x = fig2.x && fig1.y = fig2.y
+  | (Point, Circle r) | (Circle r, Point) ->
+      let distance_squared = dist_sqr fig1.x fig1.y fig2.x fig2.y in
+      distance_squared <= (r * r)
+  | (Point, Rectangle (w, h)) | (Rectangle (w, h), Point) ->
+      within_rectangle fig2.x fig2.y w h
+  | (Point, Square s) | (Square s, Point) ->
+      within_square fig2.x fig2.y s
+  | (Circle r1, Circle r2) ->
+      let distance_squared = dist_sqr fig1.x fig1.y fig2.x fig2.y in
+      distance_squared <= ((r1 + r2) * (r1 + r2))
+  | (Circle r, Rectangle (w, h)) | (Rectangle (w, h), Circle r) ->
+      let half_width = w / 2 in
+      let half_height = h / 2 in
+      let closest_x =
+        if fig1.x < fig2.x - half_width then fig2.x - half_width
+        else if fig1.x > fig2.x + half_width then fig2.x + half_width
+        else fig1.x
+      in
+      let closest_y =
+        if fig1.y < fig2.y - half_height then fig2.y - half_height
+        else if fig1.y > fig2.y + half_height then fig2.y + half_height
+        else fig1.y
+      in
+      let distance_squared = dist_sqr fig1.x fig1.y closest_x closest_y in
+      distance_squared <= (r * r)
+  | (Circle r, Square s) | (Square s, Circle r) ->
+      let half_side = s / 2 in
+      let closest_x =
+        if fig1.x < fig2.x - half_side then fig2.x - half_side
+        else if fig1.x > fig2.x + half_side then fig2.x + half_side
+        else fig1.x
+      in
+      let closest_y =
+        if fig1.y < fig2.y - half_side then fig2.y - half_side
+        else if fig1.y > fig2.y + half_side then fig2.y + half_side
+        else fig1.y
+      in
+      let distance_squared = dist_sqr fig1.x fig1.y closest_x closest_y in
+      distance_squared <= (r * r)
+  | (Rectangle (w1, h1), Rectangle (w2, h2)) ->
+      let x1_min = fig1.x - w1 / 2 in
+      let x1_max = fig1.x + w1 / 2 in
+      let y1_min = fig1.y - h1 / 2 in
+      let y1_max = fig1.y + h1 / 2 in
+      let x2_min = fig2.x - w2 / 2 in
+      let x2_max = fig2.x + w2 / 2 in
+      let y2_min = fig2.y - h2 / 2 in
+      let y2_max = fig2.y + h2 / 2 in
+      not (x1_max < x2_min || x1_min > x2_max || y1_max < y2_min || y1_min > y2_max)
+  | (Rectangle (w, h), Square s) | (Square s, Rectangle (w, h)) ->
+      let x1_min = fig1.x - w / 2 in
+      let x1_max = fig1.x + w / 2 in
+      let y1_min = fig1.y - h / 2 in
+      let y1_max = fig1.y + h / 2 in
+      let x2_min = fig2.x - s / 2 in
+      let x2_max = fig2.x + s / 2 in
+      let y2_min = fig2.y - s / 2 in
+      let y2_max = fig2.y + s / 2 in
+      not (x1_max < x2_min || x1_min > x2_max || y1_max < y2_min || y1_min > y2_max)
+  | (Square s1, Square s2) ->
+      let x1_min = fig1.x - s1 / 2 in
+      let x1_max = fig1.x + s1 / 2 in
+      let y1_min = fig1.y - s1 / 2 in
+      let y1_max = fig1.y + s1 / 2 in
+      let x2_min = fig2.x - s2 / 2 in
+      let x2_max = fig2.x + s2 / 2 in
+      let y2_min = fig2.y - s2 / 2 in
+      let y2_max = fig2.y + s2 / 2 in
+      not (x1_max < x2_min || x1_min > x2_max || y1_max < y2_min || y1_min > y2_max)
+
+;;
+(*let overlap (fig1 : loc_fig) (fig2 : loc_fig) : bool =
+  let within_rectangle x y w h =
+    fig1.x >= x && fig1.x <= x + w && fig1.y >= y && fig1.y <= y + h
+  in
+  let within_square x y s =
+    fig1.x >= x && fig1.x <= x + s && fig1.y >= y && fig1.y <= y + s
+  in
   match (fig1.fig, fig2.fig) with
   | (Point, Point) -> fig1.x = fig2.x && fig1.y = fig2.y
   | (Point, Circle r) | (Circle r, Point) ->
@@ -297,7 +393,7 @@ let overlap (fig1 : loc_fig) (fig2 : loc_fig) : bool =
       (fig1.y < fig2.y + s) && (fig1.y + h > fig2.y)
   | (Square s1, Square s2) ->
       (fig1.x < fig2.x + s2) && (fig1.x + s1 > fig2.x) &&
-      (fig1.y < fig2.y + s2) && (fig1.y + s1 > fig2.y)
+      (fig1.y < fig2.y + s2) && (fig1.y + s1 > fig2.y) *)
 
 
 (* Exercise 6.2 *)
