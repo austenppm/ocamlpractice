@@ -47,10 +47,10 @@ Exercise 2.5
 
 a_2': This is a valid variable name in OCaml. It starts with a letter, contains an alphanumeric character, an underscore, and ends with an apostrophe.
 ____: This is a valid variable name. It consists entirely of underscores, which is allowed in OCaml.
-Cat: This is a valid variable name. It starts with a letter and contains only letters, which is allowed in OCaml.
+Cat: This is invalid in OCaml as variable names must start with a lowercase letter or an underscore.
 _’_’_: This is a valid variable name. It starts with an underscore and contains only underscores and apostrophes, which is allowed in OCaml.
 7eleven: This is an invalid variable name in OCaml. Variable names cannot start with a number.
-’ab2_: This is a valid variable name in OCaml. It starts with an apostrophe, contains alphanumeric characters and an underscore, which is allowed.
+’ab2_: This is an invalid variable name in OCaml. Although it contains valid characters, it starts with an apostrophe which is not allowed.
 _: This is a valid variable name. A single underscore is a special variable in OCaml, often used as a "don't care" pattern in pattern matching.
 
 (* 上記のlet宣言の結果を表示して確認する *)
