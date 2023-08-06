@@ -8,16 +8,18 @@ int_of_string "0xff" の型は int であり、評価結果は 255 です。int_
 5.0 ** 2.0 の型は float であり、評価結果は 25.0 です。** 演算子は浮動小数点数のべき乗を計算します。
 Exercise 2.2:
 
-if true&&false then 2 は文法エラーです。条件式の後には then 節と else 節が必要ですが、else 節が省略されています。
+型エラー。このエラーメッセージの理由は、if文の条件式は真偽値（boolean）である必要があるためです。しかし、与えられた条件式 `true&&false` は論理演算子 `&&` で結合された2つの値 `true` と `false` から成り立っています。論理演算子の結果は真偽値ですが、if文の条件式には直接使用する必要があります。したがって、この式では型エラーが発生します。
 8*-2 は文法エラーです。乗算演算子 * の前後には空白が必要です。
 int_of_string "0xfg" は例外を発生します。"0xfg" は正しい16進数表記ではないため、int_of_string 関数がエラーをスローします。
 int_of_float -0.7 の型は int ですが、負の浮動小数点数を整数に変換する場合には ~- 演算子を使う必要があります。正しくは int_of_float (~-.0.7) と書きます。
+
 Exercise 2.3:
 
 not true && false の期待する結果は true です。この式を直すには、括弧で not true を囲む必要があります: (not true) && false.
 float_of_int int_of_float 5.0 の期待する結果は 5.0 です。この式を直すには、int_of_float の結果を float_of_int の引数に渡す必要があります: float_of_int (int_of_float 5.0).
-sin 3.14 /. 2.0 ** 2.0 +. cos 3.14 /. 2.0 ** 2.0 の期待する結果は 1.0 です。この式を直すには、数学的な優先順位を明示するために括弧を追加する必要があります: (sin 3.14 /. (2.0 ** 2.0)) +. (cos 3.14 /. (2.0 ** 2.0)).
-sqrt 3 * 3 + 4 * 4 の期待する結果は 5 (整数) です。この式を直すには、sqrt 3 の結果を括弧で囲んで演算の優先順位を明示する必要があります: (sqrt 3) * 3 + (4 * 4).
+sin 3.14 /. 2.0 ** 2.0 +. cos 3.14 /. 2.0 ** 2.0 の期待する結果は 1.0 です。この式を直すには、数学的な優先順位を明示するために括弧を追加する必要があります: (sin (3.14 /. (2.0 ** 2.0))) +. (cos (3.14 /. (2.0 ** 2.0)))
+sqrt 3 * 3 + 4 * 4 の期待する結果は 5 (整数) です。この式を直すには、sqrt 3 の結果を括弧で囲んで演算の優先順位を明示する必要があります: sqrt ((3 * 3) + (4 * 4)).
+
 Exercise 2.4:
 
 b1 && b2 を if-式 と true、false、b1、b2 のみを用いて書き直すと以下のようになります：
@@ -40,11 +42,11 @@ else
 
 Exercise 2.5 
 
-let a_2 = 5 in
-let _ab2_ = "Hello" in
-(* let 'Cat' = 10 in これは無効な変数名なのでコンパイルエラーになります *)
-(* let _'_'_ = true in これも無効な変数名なのでコンパイルエラーになります *)
-(* let 7eleven = "Shop" in これも無効な変数名なのでコンパイルエラーになります *)
+a_2: This is a valid variable name. It starts with a letter and follows with an alphanumeric character and an underscore. 
+ab2: This is also a valid variable name. It starts with an underscore and follows with alphanumeric characters and underscores. 
+'Cat': This is an invalid variable name as it starts with an apostrophe. Variable names should start with a letter or an underscore, not a special character like an apostrophe. 
+'_: This is also invalid, as a variable name cannot start with an apostrophe, even if it's preceded by an underscore.
+7eleven: This is invalid, as variable names cannot start with a number. 
 
 (* 上記のlet宣言の結果を表示して確認する *)
 print_int a_2;    (* 5 を表示 *)
@@ -56,7 +58,12 @@ print_string _ab2_;  (* "Hello" を表示 *)
 let yen_of_usdollar d = d *. 111.12 +. 0.5 |> int_of_float;;
 let usdollar_of_yen d = (d |> float_of_int) /. 1.1112 +. 0.5 |> int_of_float |> float_of_int |> (fun y -> y /. 100.);;
 let yen_of_usdollar_message d =  ( (d |> string_of_float) ^ " dollars are " ^ ( (d  *. 111.12 +. 0.5 |> int_of_float)|> string_of_int ) ^ " yen.");;
-let capitalize d = Char.uppercase_ascii d;;
+let capitalize d =
+  if d >= 'a' && d <= 'z' then
+    Char.chr (Char.code d - 32)
+  else
+    d;;
+
 
 
 (* Exercise 3.1:
@@ -64,48 +71,45 @@ let capitalize d = Char.uppercase_ascii d;;
 let x = 1 in let x = 3 in let x = x + 2 in x * x
 
 各変数の参照:
+x + 2 における x は2番目の let x = 3 で定義された x を指し、値は 3 です。
+x * x における x は let x = x + 2 で定義された x を指し、値は 5 です。
 
-最初のxは最も内側のスコープであり、3を指します。
-2番目のxは2番目のスコープであり、3を指します。
-最後のxは最も外側のスコープであり、5を指します。
 予想される評価結果:
-
 x * x の値は 5 * 5 であり、25 です。
+
 let x = 2 and y = 3 in (let y = x and x = y + 2 in x * y) + y
 
 各変数の参照:
+内側の y = x における x は最も外側の let x = 2 で定義された x を指し、値は 2 です。
+内側の x = y + 2 における y は最も外側の let y = 3 で定義された y を指し、値は 3 です。
+x * y における x は内側の let x = y + 2 で定義された x を指し、値は 5 です。
+x * y における y は内側の let y = x で定義された y を指し、値は 2 です。
 
-最初のxは最も外側のスコープであり、2を指します。
-最初のyも最も外側のスコープであり、3を指します。
-内側のlet式のスコープでは、yは最も内側のスコープであり、2を指します。
-同じく内側のスコープでは、xはその直前のy + 2 の結果である 5 を指します。
 予想される評価結果:
-
 (x * y) + y の値は (5 * 2) + 3 であり、13 です。
+
 let x = 2 in let y = 3 in let y = x in let z = y + 2 in x * y * z
 
 各変数の参照:
+let y = x における x は最も外側の let x = 2 で定義された x を指し、値は 2 です。
+let z = y + 2 における y は let y = x で定義された y を指し、値は 2 です。
+x * y * z における x は最も外側の let x = 2 で定義された x を指し、値は 2 です。
+x * y * z における y は let y = x で定義された y を指し、値は 2 です。
+x * y * z における z は let z = y + 2 で定義された z を指し、値は 4 です。
 
-最初のxは最も外側のスコープであり、2を指します。
-最初のyも最も外側のスコープであり、3を指します。
-2番目のyは2番目のスコープであり、2を指します。
-最後のzは最も内側のスコープであり、4を指します。
 予想される評価結果:
-
 x * y * z の値は 2 * 2 * 4 であり、16 です。
 
-Excercise 3.2
+Exercise 3.2
+
 let x = e1 and y = e2;;
 
-この宣言では、変数 x と y を同時に定義しています。
-e1 は x の初期値を表し、e2 は y の初期値を表します。
-x と y は同じスコープ内で利用可能であり、互いに参照することができます。
+この宣言では、変数 x と y を同時に定義していますが、e2 の中で x を参照することはできません。e1 は x の初期値を表し、e2 は y の初期値を表します。x と y は同じスコープ内で利用可能でありますが、e2 の中では x は未定義であるため、互いに参照することができません。
+
 let x = e1 let y = e2;;
 
-この宣言では、まず x を定義し、その後に y を定義しています。
-e1 は x の初期値を表し、e2 は y の初期値を表します。
-x のスコープは宣言全体であり、y のスコープはその後の let 宣言以降になります。
-つまり、y は x を参照することができますが、x は y を参照することはできません。
+この宣言では、まず x を定義し、その後に y を定義しています。e1 は x の初期値を表し、e2 は y の初期値を表します。この場合、y の定義の中で x を参照することができますが、e1 の中では y は未定義であるため、x は y を参照することはできません。
+
 
 Exercise 3.4
 
@@ -173,19 +177,25 @@ Exercise 3.9
 以下のコードは、if 式を関数 cond と再帰関数 fact を組み合わせて表現しようとしています。
 
 let cond (b, e1, e2) : int = if b then e1 else e2;;
-
 let rec fact n = cond ((n = 1), 1, n * fact (n-1));;
-
 fact 4;;
-しかし、このコードでは fact 4 の計算がうまく行われず、評価ステップが停止しません。
 
-この問題が発生する理由は、OCamlにおける関数の遅延評価と関数呼び出しの評価順序の特性に関連しています。
+このコードの問題は、関数 cond の評価において、条件式 b の値に応じて e1 か e2 のどちらかの値を返す必要があることです。しかし、この関数定義では、e1 と e2 の両方が評価されるため、無限再帰が発生します。
 
-具体的には、fact 関数が再帰的に呼び出される際に、引数 n の値が再帰呼び出しの前に評価されるためです。この場合、fact (n-1) の評価が行われる前に、n の評価が必要ですが、その結果はまだ得られていないため、評価が停止します。
+例として、fact 1 の評価を考えてみましょう：
 
-つまり、関数 cond の第二引数と第三引数のどちらかが評価される前に条件式 n = 1 の結果が必要になりますが、それが得られないため、計算が停止してしまいます。
+cond ((1 = 1), 1, 1 * fact (1 - 1))
+cond (true, 1, 1 * fact 0)
+cond (true, 1, 1 * cond ((0 = 1), 1, 0 * fact (0 - 1)))
+cond (true, 1, 1 * cond (false, 1, 0 * fact (-1)))
+cond (true, 1, 1 * cond (false, 1, 0 * fact (-1)))
+...
 
-この問題を解決するためには、遅延評価や正格評価の手法を使って fact 関数を実装する必要があります。また、OCamlでは if 式を使って遅延評価を実現することはできません。代わりに、パターンマッチングや再帰呼び出しを適切に使用することで、再帰関数としての fact 関数を正しく実装することができます。
+ここで、fact 関数の再帰呼び出しは停止することなく、無限に続きます。cond の第三引数が評価される際に、fact が再帰的に呼び出されるため、計算が停止しません。
+
+この問題は、OCaml の if 式が遅延評価を行うのに対して、関数呼び出しでは引数が先に評価されるために発生します。そのため、この形式での if 式の表現は、再帰関数においてはうまく機能しません。
+
+再帰関数としての fact 関数を正しく実装するには、直接的な if 式を使用するか、他のプログラミングパターンを適用する必要があります。
 
 Exercise 3.10 let rec fib n =
   match n with
@@ -313,29 +323,22 @@ let apply_operation (op : int -> int -> int) : int =
 これらの説明に基づいて、3つの型に属する適当な関数が定義されました。それぞれの関数は与えられた型に適合し、期待通りの引数と結果の型を持っています。
 
 Exercise 4.6
-引数 f は関数型 'a -> 'a の関数です。
-引数 n は整数型 (int) の数値です。
-引数 x は型 'a の値です。
-この関数は、関数 f と整数 n を受け取り、関数 funny を再帰的に適用して、変換された関数を生成します。生成された関数は、x に適用されることが想定されます。
-
-funny 関数の動作は以下のようになります：
-
-n が 0 の場合、id 関数が返されます。つまり、変換が終了し、x に変更は加えられません。
-n が偶数の場合、f 関数が2回適用されるように変換が行われます。n を 2 で割り、f 関数を2回繰り返し適用することで、変換が進行します。
-n が奇数の場合、f 関数が2回適用されるように変換が行われます。その後、さらに f 関数が1回適用されます。n を 2 で割り、f 関数を2回繰り返し適用し、最後に1回だけ f 関数を適用することで、変換が進行します。
-最終的に生成される関数の型は 'a -> 'a です。funny 関数は、与えられた関数 f と整数 n に基づいて、再帰的な変換を行いながら新しい関数を生成します。生成された関数は x に適用されることが期待されています。
+funny関数は、入力関数fを引数にn回適用して新しい関数を生成する。
+関数fは'a -> 'a型の単項関数で、nは整数である。
+nが偶数の場合、関数はfを2回再帰的に適用し、nが0になるまで毎回nを半分にします。
+nが奇数の場合、関数は同様の動作をしますが、再帰的ステップの後にfをさらに1回適用します。
+funny関数の最も注目すべき点はその効率性である。
+この関数は、分割統治戦略を利用して、fの必要な適用回数をnからおよそlog(n)に減らす。
+このようにして、計算量の大幅な削減を達成し、大きなnの値に対して非常に効率的である。
 
 Exercise 4.8
-let rec double double f x =
-  if x = 0 then x
-  else double double f (x - 1) + double double f (x - 1)
-与えられた関数 double は、関数 f と整数 x を引数として受け取り、x 回の f の合成を行う関数です。
+Assuming double is defined as let double f x = f (f x), we can see double double f x applies the double function to itself and then applies it to f and x.
+To break this down:
+double double f x becomes double (double f) x according to the definition of double.
+Then, double (double f) x is the same as double f (double f x).
+Each double f application applies f twice, so double f (double f x) applies f twice to x and then applies f twice again.
+So, double double f x performs f(f(f(fx))), applying f to x four times.
 
-関数 double の動作は以下の通りです：
-
-x が 0 の場合、x を返します。これは再帰の終了条件です。
-x が 0 より大きい場合、f を2回適用した結果の合計を返します。具体的には、double double f (x - 1) と double double f (x - 1) を計算し、その合計を返します。
-このように、double double f x は再帰的に自身を呼び出し、x 回の f の合成を行います。
  *)
 
 (* Exercise 4.1 *)
@@ -358,6 +361,18 @@ let rec pow_curry =
 
 let cube = pow_curry 3;;
 
+(* In the case that we make pow x n 
+let rec pow_curry n x =
+  if n = 0 then 1.0
+  else x *. pow_curry (n - 1) x;;
+
+let pow' x n = pow_curry n x;;
+let cube' = pow' 3;;
+
+Here, the pow' function defines a new function using the original pow_curry but switches the order of the arguments. Then, we define cube' using this new function.
+If you need to reverse the order of function arguments, simply using partial application won't suffice. You would need to define a new function or use higher-order functions to achieve the desired partial application.
+   *)
+
 (* Exercise 4.4 *)
 let uncurry curry_fun = 
   fun x -> 
@@ -372,7 +387,21 @@ let fib_repeat n =
   let (fibn, _) = repeat (fun (x, y) -> (y, x+y)) (n-1) (1, 1) 
   in fibn;;
 
-(* Exercise 4.7 *)
+(* Exercise 4.7 
+
+The combinators s and k are defined as follows:
+
+- s is a function that takes three arguments and returns the result of the first argument applied to the third, which is then applied to the result of the second argument applied to the third:  s x y z = x z (y z) 
+- k is a function that takes two arguments and returns the first:  k x y = x 
+
+Now let's evaluate  s k k 1 :
+
+1. Substitute s, k, and 1 into the definition of s:  s k k 1 = k 1( k 1) 
+2. Substitute 1 into the definition of k:  k , 1 , k , 1 = 1 
+
+So  s k k 1  evaluates to 1, which shows that  s k k  acts as the identity function.
+
+*)
 let k x y = x;;
 let s x y z = x z ( y z );;
 let second a b = k (s k k) a b;;
@@ -394,26 +423,17 @@ let rec max_list lst =
 
 (* Exercise 5.1
 
-正しいリスト表現は以下のものです。
+[[]] - This is a correct list expression. It represents a list containing a single empty list. The type is 'a list list.
 
-[[]]
+[[1; 3]; ["hoge"]] - This is incorrect. In OCaml, all elements of a list must be of the same type. This expression attempts to create a list containing an int list and a string list, which is not allowed.
 
-正しい表現です。型は 'a list list です。空のリストを要素とするリストです。
-[[1; 3]; ["hoge"]]
+[3] :: [] - This is correct. It represents a list containing a single element list [3]. The type is int list list.
 
-正しい表現です。型は int list list です。整数のリストと文字列のリストを要素とするリストです。
-[3] :: []
+2 :: [3] :: [] - This is incorrect. The :: operator expects the second argument to be a list, but in 2 :: [3], the second argument [3] is an int list and not an int.
 
-正しい表現です。型は int list です。整数のリストです。リストの先頭に要素 3 を追加しています。
-2 :: [3] :: []
+[] :: [] - This is correct. It represents a list containing an empty list. The type is 'a list list.
 
-正しい表現です。型は int list list です。整数のリストを要素とするリストです。先頭のリストに 2 を、その次のリストに 3 を追加しています。
-[] :: []
-
-正しい表現です。型は 'a list list です。空のリストを要素とするリストです。
-[(fun x -> x); (fun b -> not b)]
-
-正しい表現です。型は ('a -> 'a) list です。関数を要素とするリストです。2つの無名関数を要素として持っています。
+[(fun x -> x); (fun b -> not b)] - This is incorrect. The two anonymous functions in the list have different types. The first function is of type 'a -> 'a, while the second function is of type bool -> bool. In OCaml, all elements of a list must be of the same type.
 
 Exercise 5.2（部分的に論述が必要）
 sum_list の定義：
@@ -553,19 +573,19 @@ let rec diff lst1 lst2 =
 
 
 (* Exercise 5.5 *)
-let rec fold_right f lst acc =
-  match lst with
-  | [] -> acc
-  | x :: xs -> f x (fold_right f xs acc)
+let map f lst = List.map f lst
+
+let fold_right f acc lst = List.fold_right f lst acc
 
 let forall pred lst =
-  let f x acc = acc && (pred x) in
-  fold_right f lst true;;
+  lst
+  |> map pred
+  |> fold_right (&&) true
 
 let exists pred lst =
-  let f x acc = acc || (pred x) in
-  fold_right f lst false;;
-
+  lst
+  |> map pred
+  |> fold_right (||) false
 
 (* Exercise 5.6 *)
 let rec quicker l sorted = 
@@ -613,76 +633,180 @@ let map2 f lst =
 
 (* Exercise 6.6（部分的に論述が必要）
 
-まず、二分木の左右を反転させる関数 reflect を定義しましょう。次に、与えられた二分木 t に対して成立する方程式を完成させます。
-
+The function reflect is defined to recursively reverse a binary tree. Specifically, for each branching node (Br) in the tree, it interchanges the positions of the left and right subtrees. When it encounters a leaf node (Lf), it simply returns the leaf node as is.
 type 'a tree = Lf | Br of 'a * 'a tree * 'a tree
 
 let rec reflect t =
   match t with
   | Lf -> Lf
   | Br (x, left, right) -> Br (x, reflect right, reflect left)
-上記のコードでは、二分木の構造を再帰的に反転させています。葉ノード (Lf) の場合は反転せずにそのまま返し、分岐ノード (Br) の場合は値 x をそのまま保持しながら左右の子ノードを反転させます。
+This is how the order of traversals change for the reflected tree compared to the original tree.
 
-次に、成立する方程式を完成させます。
+preorder(reflect(t)): In a preorder traversal, we visit the root, then the left subtree, and finally the right subtree. When the tree is reflected, the order of visiting becomes root, right subtree, and then left subtree. This order is the reverse of the postorder traversal of the original tree. Thus, preorder(reflect(t)) = reverse(postorder(t)).
 
-preorder(reflect(t)) = ?
-preorder は根を最初に、左部分木を次に、右部分木を最後に訪れるため、反転後の木では根と左右の子ノードの順序が逆転します。したがって、preorder(reflect(t)) の結果は postorder(t) となります。
+inorder(reflect(t)): In an inorder traversal, we visit the left subtree, then the root, and finally the right subtree. When the tree is reflected, the order of visiting becomes right subtree, root, and then left subtree. This order is the reverse of the original inorder traversal. Thus, inorder(reflect(t)) = reverse(inorder(t)).
 
-inorder(reflect(t)) = ?
-inorder は左部分木を最初に、根を次に、右部分木を最後に訪れるため、反転後の木では左右の子ノードと根の順序が逆転します。したがって、inorder(reflect(t)) の結果は inorder(t) となります。
-
-postorder(reflect(t)) = ?
-postorder は左部分木を最初に、右部分木を次に、根を最後に訪れるため、反転後の木では左右の子ノードと根の順序が逆転します。したがって、postorder(reflect(t)) の結果は inorder(t) となります。
-
-以上より、方程式の完成形は以下のようになります：
-
-preorder(reflect(t)) = postorder(t)
-inorder(reflect(t)) = inorder(t)
-postorder(reflect(t)) = inorder(t)
-これらの方程式は、与えられた二分木 t の各順序において、反転した木の対応する順序と等しいことを示しています。
+postorder(reflect(t)): In a postorder traversal, we visit the left subtree, then the right subtree, and finally the root. When the tree is reflected, the order of visiting becomes right subtree, left subtree, and then root. This order is the reverse of the preorder traversal of the original tree. Thus, postorder(reflect(t)) = reverse(preorder(t)).
 
 Exercise 6.8 
-1, 2, 3, 4 からなる可能な二分探索木の形を列挙し、要素を追加するための順番を示します。
+Exercise 6.8 asks for all possible binary search trees (BSTs) that can be formed using the numbers 1, 2, 3, and 4. There are 14 possible BSTs that can be formed from these four numbers. Here are all the possible trees, along with the sequence of insertions required to form each tree:
 
-1. 以下のような二分探索木を考えます：
+1. 
+   ```
+   1
+    \
+     2
+      \
+       3
+        \
+         4
+   ```
+   Insert in the order: 1, 2, 3, 4
 
+2. 
+   ```
+   1
+    \
+     2
+      \
+       4
+      /
+     3
+   ```
+   Insert in the order: 1, 2, 4, 3
+
+3. 
+   ```
+   1
+    \
+     3
+    / \
+   2   4
+   ```
+   Insert in the order: 1, 3, 2, 4
+
+4. 
+   ```
+   1
+    \
+     4
+    / 
+   2
+    \
+     3
+   ```
+   Insert in the order: 1, 4, 2, 3
+
+5. 
+   ```
+   1
+    \
+     4
+    / 
+   3
+  /
+ 2
+   ```
+   Insert in the order: 1, 4, 3, 2
+
+6. 
+   ```
    2
   / \
  1   3
       \
        4
+   ```
+   Insert in the order: 2, 1, 3, 4
 
-要素を追加する順番は、1, 2, 3, 4 の順番です。
+7. 
+   ```
+   2
+  / \
+ 1   4
+    /
+   3
+   ```
+   Insert in the order: 2, 1, 4, 3
 
-2. 以下のような二分探索木を考えます：
+8. 
+   ```
+   2
+  / \
+ 1   4
+    /
+   3
+  /
+ 2
+   ```
+   Insert in the order: 2, 1, 4, 2, 3
 
+9. 
+   ```
    3
   / \
  1   4
   \
    2
+   ```
+   Insert in the order: 3, 1, 4, 2
 
-要素を追加する順番は、1, 3, 2, 4 の順番です。
+10. 
+    ```
+    3
+   / \
+  2   4
+ /
+1
+    ```
+    Insert in the order: 3, 2, 4, 1
 
-3. 以下のような二分探索木を考えます：
+11. 
+    ```
+    3
+   / \
+  1   2
+   \
+    4
+    ```
+    Insert in the order: 3, 1, 2, 4
 
-   3
-  / \
- 2   4
-  \
-   1
+12. 
+    ```
+    4
+   / 
+  1
+   \
+    2
+     \
+      3
+    ```
+    Insert in the order: 4, 1, 2, 3
 
-要素を追加する順番は、3, 2, 1, 4 の順番です。
+13. 
+    ```
+    4
+   / 
+  2
+ / \
+1   3
+    ```
+    Insert in the order: 4, 2, 1, 3
 
-これらの形を作るためには、空の木から要素を追加していく際に、二分探索木の性質を保つように要素を配置する必要があります。具体的には、以下の手順に従って要素を追加します：
+14. 
+    ```
+    4
+   / 
+  3
+ / 
+2
+ \
+  1
+    ```
+    Insert in the order: 4, 3, 2, 1
 
-1. 空の木から始めます。
-2. 最初の要素をルートノードに追加します。
-3. 2番目の要素をルートノードと比較し、小さければ左の子ノードに追加し、大きければ右の子ノードに追加します。
-4. 3番目の要素をルートノードから始めて、同様の比較と追加の手順を繰り返します。
-5. 最後の要素を追加します。
+I think this should be all 14 possible binary search trees that can be formed from the numbers 1, 2, 3, and 4. Each tree is associated with at least one sequence of insertions that leads to its formation.
 
-この手順に従うと、上記の二分探索木の形を作ることができます。ただし、要素の追加順によって異なる形が得られるため、異なる二分探索木の形も存在します。
 *)
 (* Exercise 6.1 *)
 type figure = Point | Circle of int | Rectangle of int * int | Square of int
@@ -871,14 +995,19 @@ let rec comptree x n =
 
 
 (* Exercise 6.5 *)
-let rec inord = function
-  | Lf -> []
-  | Br (x, left, right) -> inord left @ [x] @ inord right
+let rec inord t =
+  let rec aux t acc =
+    match t with
+    | Lf -> acc
+    | Br (x, left, right) -> aux left (x :: aux right acc)
+  in aux t []
 
-let rec postord = function
-  | Lf -> []
-  | Br (x, left, right) -> postord left @ postord right @ [x]
-
+let rec postord t =
+  let rec aux t acc =
+    match t with
+    | Lf -> acc
+    | Br (x, left, right) -> aux left (aux right (x :: acc))
+  in aux t []
 
 (* Exercise 6.6 *)
 let rec reflect = function
@@ -980,72 +1109,60 @@ let f5 = function
 最後に、`funny_fact` を呼び出すことで階乗の計算が行われます。この際、参照 `f` が指す関数として、初期値の `fun y -> y + 1` ではなく、変更後の `funny_fact` が使用されます。そのため、再帰的に `funny_fact` を呼び出すことにより、正しい階乗の計算が行われます。
 
 このように、`ref` を使って関数の参照を変更することで、再帰的な定義を使用せずに関数を再帰的に呼び出す仕組みが実現されています。
+
 Exercise 7.6
-まず、7.1.4節で述べられている `[]` への参照の例を実際にインタラクティブ・コンパイラで試してみます。
+In OCaml, when you define a reference to an empty list like `let l = ref []`, the type inferred by the compiler is `_ list ref`, not `'a list ref`. The underscore `_` is a placeholder for a type that has yet to be determined, not a polymorphic `'a`. This helps OCaml to ensure type safety.
+
+When you try to prepend `true` to the list that `l` refers to with `l := true :: !l`, the OCaml compiler will throw a type error. This is because at the time of the operation, the type of list that `l` refers to has not yet been determined. Thus, OCaml cannot guarantee that `true` (a boolean value) is a valid element for the list.
+
+This is how OCaml prevents situations where a boolean value is accidentally prepended to a list of integers. The OCaml type system ensures that all elements of a list are of the same type, and the use of the `_ list ref` type for `l` means that the specific type of the list elements is yet to be fixed, preventing operations that could result in a type mismatch. Once a value of a specific type is added to the list, the type of the list gets fixed to that type.
+
+In OCaml, you can define a reference to an empty list as follows:
 
 let l = ref [];;
 
-このコードでは、空のリスト `[]` を参照として持つ変数 `l` を定義しています。
+The type of `l` as inferred by the OCaml compiler is `_ list ref`, not `'a list ref` as previously stated. This means that `l` is a reference to a list of some yet unspecified type.
 
-テキストに書かれた挙動との違いは、OCamlのインタラクティブ・コンパイラでは参照の型が明示的に表示される点です。具体的には、以下のような表示となります：
-
-val l : 'a list ref = {contents = []}
-
-上記の出力は、`l` の型が `'a list ref` であり、参照の中身が `[]` (空のリスト) であることを示しています。
-
-参照の型 `'a list ref` は、`'a` という型のリストを参照することを意味しています。`'a` は任意の型変数を表し、参照が指すリストの要素の型を表すために使用されます。
-
-このように参照の型が表示されることで、`[]` への参照が明示的に示されています。
-
-また、参照の型が `'a list ref` であるため、リストの要素の型に関わらずどのようなリストであっても参照に格納することができます。これにより、誤って `true` を `[1]` に cons してしまうような事態の発生を防ぐことができます。
-
-例えば、以下のようなコードを実行するとエラーが発生します：
+If you try to perform an operation such as prepending `true` to the list that `l` refers to:
 
 l := true :: !l;;
 
+You will encounter a type error. The OCaml compiler prevents such an operation because the type of the list that `l` refers to is not yet specified. Since `true` is a boolean value and the list could potentially be of any type, the compiler cannot guarantee that this operation is type-safe.
 
-エラーメッセージは以下のようになります：
+This is how OCaml prevents a situation where `true` is accidentally prepended to a list of integers. The type of `l` as `_ list ref` indicates that the list is of some unspecified type, and once a value is added to the list, the type of the list becomes fixed. This ensures that all elements of the list are of the same type and prevents type mismatches.
 
-Error: This expression has type bool but an expression was expected of type 'a list
-
-
-このエラーメッセージは、`true` の型が `bool` であるため、参照 `l` のリストの要素の型 `'a` と一致せず、エラーが発生していることを示しています。
-
-したがって、参照の型が明示的に表示されることで、リストの要素の型が保持され、誤った要素の追加や型の不一致が防がれます。
 Exercise 7.7 
-問題のプログラムでは、継承を模倣するために `pointC` の定義が変更されています。しかし、`cpointC` の実装では `cset` メソッドが正しく機能していません。具体的には、`cset` メソッド内で `super.set` を呼び出す前に `col` を白にセットする処理が行われてしまっています。
 
-これにより、`cset` メソッドの呼び出し時に色がまだ変更される前に座標がセットされてしまい、結果として色が白にならない問題が発生します。
+type color = Blue | Red | Green | White
 
-正しい動作を実現するためには、`cset` メソッド内で `super.set` を呼び出した後に色を白にセットする必要があります。そのために、以下のようにプログラムを書き換えましょう。
+type pointI = {get: unit -> int; set: int -> unit; inc: unit -> unit}
 
-let cpointC x col =
-  let super = pointC x in
-  let rec this =
-    {
-      cget = super.get;
-      cset = (fun x' -> (super.set x'; col := White));
-      cinc = super.inc;
-      getcolor = (fun () -> !col)
-    }
-  in
-  this
+let pointC x this =
+  {get = (fun () -> !x);
+   set = (fun newx -> x := newx);
+   inc = (fun () -> (this()).set ((this()).get () + 1))}
 
-上記の修正では、`cset` メソッド内で `super.set` を呼び出す前に `col` を白にセットしています。
+let new_point x =
+  let x = ref x in
+  let rec this () = pointC x this in
+  this ()
 
-修正後のプログラムを使用すると、`cp.cinc()` の呼び出しによって座標がセットされる前に色が白になります。
+type cpointI = {cget: unit -> int; cset: int -> unit; cinc: unit -> unit; getcolor: unit -> color}
 
-let cp = new_cpoint 0 Red;;
-cp.cinc();;
-cp.cget();;
-cp.getcolor();;
+let cpointC x col this =
+  let super = new_point !x in
+  {cget = super.get;
+   cset = (fun x -> super.set x; col := White);
+   cinc = super.inc;
+   getcolor = (fun () -> !col)}
 
-実行結果:
-- : unit = ()
-- : int = 1
-- : color = White
+let new_cpoint x col =
+  let x = ref x in
+  let col = ref col in
+  let rec this () = cpointC x col this in
+  this ()
 
-これにより、`cinc` メソッドによって座標がセットされると同時に色も白になるようになりました。修正によって、望んだ動作が実現されました。
+I have tried this but it did not seem to work on my computer, but so far this is my best effort. Thank you for your understanding. 
 *)
 
 (* Exercise 7.1 *)
