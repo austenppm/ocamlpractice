@@ -8,16 +8,19 @@ int_of_string "0xff" の型は int であり、評価結果は 255 です。int_
 5.0 ** 2.0 の型は float であり、評価結果は 25.0 です。** 演算子は浮動小数点数のべき乗を計算します。
 Exercise 2.2:
 
-型エラー。このエラーメッセージの理由は、if文の条件式は真偽値（boolean）である必要があるためです。しかし、与えられた条件式 `true&&false` は論理演算子 `&&` で結合された2つの値 `true` と `false` から成り立っています。論理演算子の結果は真偽値ですが、if文の条件式には直接使用する必要があります。したがって、この式では型エラーが発生します。
-8*-2 は文法エラーです。乗算演算子 * の前後には空白が必要です。
-int_of_string "0xfg" は例外を発生します。"0xfg" は正しい16進数表記ではないため、int_of_string 関数がエラーをスローします。
-int_of_float -0.7 の型は int ですが、負の浮動小数点数を整数に変換する場合には ~- 演算子を使う必要があります。正しくは int_of_float (~-.0.7) と書きます。
+1. In OCaml, the if construct is an expression, not a statement. This means it always needs to return a value. If you provide only the then clause without the else clause, OCaml assumes the else clause is of type unit.
+Therefore, the problem with if true&&false then 2 is that there is no else clause, so the then clause is expected to be of type unit. However, the then clause 2 is of type int, not unit, leading to a type error.
+The correct form would be to provide an else clause that also returns an int, such as if true&&false then 2 else 0. `true&&false` は論理演算子 `&&` で結合された2つの値 `true` と `false` から成り立っています。論理演算子の結果は真偽値ですが、if文の条件式には直接使用する必要があります。したがって、この式では型エラーが発生します。
+
+2  8*-2 は文法エラーです。乗算演算子 * の前後には空白が必要です。
+3 int_of_string "0xfg" は例外を発生します。"0xfg" は正しい16進数表記ではないため、int_of_string 関数がエラーをスローします。
+4 int_of_float -0.7 の型は int ですが、負の浮動小数点数を整数に変換する場合には ~- 演算子を使う必要があります。正しくは int_of_float (~-.0.7) と書きます。
 
 Exercise 2.3:
 
 not true && false の期待する結果は true です。この式を直すには、括弧で not true を囲む必要があります: (not true) && false.
 float_of_int int_of_float 5.0 の期待する結果は 5.0 です。この式を直すには、int_of_float の結果を float_of_int の引数に渡す必要があります: float_of_int (int_of_float 5.0).
-sin 3.14 /. 2.0 ** 2.0 +. cos 3.14 /. 2.0 ** 2.0 の期待する結果は 1.0 です。この式を直すには、数学的な優先順位を明示するために括弧を追加する必要があります: (sin (3.14 /. (2.0 ** 2.0))) +. (cos (3.14 /. (2.0 ** 2.0)))
+sin 3.14 /. 2.0 ** 2.0 +. cos 3.14 /. 2.0 ** 2.0 の期待する結果は 1.0 です。この式を直すには、数学的な優先順位を明示するために括弧を追加する必要があります: ((sin (3.14 /. 2.0)) ** 2.0) +. ((cos (3.14 /. 2.0)) ** 2.0)
 sqrt 3 * 3 + 4 * 4 の期待する結果は 5 (整数) です。この式を直すには、sqrt 3 の結果を括弧で囲んで演算の優先順位を明示する必要があります: sqrt ((3 * 3) + (4 * 4)).
 
 Exercise 2.4:
@@ -42,11 +45,13 @@ else
 
 Exercise 2.5 
 
-a_2: This is a valid variable name. It starts with a letter and follows with an alphanumeric character and an underscore. 
-ab2: This is also a valid variable name. It starts with an underscore and follows with alphanumeric characters and underscores. 
-'Cat': This is an invalid variable name as it starts with an apostrophe. Variable names should start with a letter or an underscore, not a special character like an apostrophe. 
-'_: This is also invalid, as a variable name cannot start with an apostrophe, even if it's preceded by an underscore.
-7eleven: This is invalid, as variable names cannot start with a number. 
+a_2': This is a valid variable name in OCaml. It starts with a letter, contains an alphanumeric character, an underscore, and ends with an apostrophe.
+____: This is a valid variable name. It consists entirely of underscores, which is allowed in OCaml.
+Cat: This is a valid variable name. It starts with a letter and contains only letters, which is allowed in OCaml.
+_’_’_: This is a valid variable name. It starts with an underscore and contains only underscores and apostrophes, which is allowed in OCaml.
+7eleven: This is an invalid variable name in OCaml. Variable names cannot start with a number.
+’ab2_: This is a valid variable name in OCaml. It starts with an apostrophe, contains alphanumeric characters and an underscore, which is allowed.
+_: This is a valid variable name. A single underscore is a special variable in OCaml, often used as a "don't care" pattern in pattern matching.
 
 (* 上記のlet宣言の結果を表示して確認する *)
 print_int a_2;    (* 5 を表示 *)
@@ -433,7 +438,10 @@ let rec max_list lst =
 
 [] :: [] - This is correct. It represents a list containing an empty list. The type is 'a list list.
 
-[(fun x -> x); (fun b -> not b)] - This is incorrect. The two anonymous functions in the list have different types. The first function is of type 'a -> 'a, while the second function is of type bool -> bool. In OCaml, all elements of a list must be of the same type.
+[(fun x -> x); (fun b -> not b)] - After reading up a bit, testing it on the interpreter and asking a bit to ChatGpt, I learned that this is valid because because both anonymous functions are of the same type: they are both functions. 
+The first function, (fun x -> x), is an identity function that can take a value of any type 'a and returns a value of the same type 'a. In OCaml, function types are also types, so a list can contain different functions as long as they are all functions. 
+The reason this works is due to OCaml's type inference and the fact that OCaml uses a polymorphic type system. When the OCaml type checker looks at this list, it sees that the first function can take any type and return that same type. This means the second function must also be able to accept any type.
+Since the not function can only accept booleans, OCaml will infer that the type of 'a in this context is bool. With this I am going to guess that if the first function is not polymorphic or only accepts booleans, this would not work because the second function only accepts booleans. 
 
 Exercise 5.2（部分的に論述が必要）
 sum_list の定義：
